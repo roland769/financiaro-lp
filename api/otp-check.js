@@ -2,7 +2,7 @@
 // Checks the code with Twilio Verify. On success, marks the lead as phone-verified server-side
 // (so a visitor cannot forge "verified" from the browser) and forwards the update to the CRM.
 import { client, VERIFY_SID, toE164, rateLimit, ip, cors, readJson } from "./_lib.js";
-import { forwardLead } from "./lead.js";
+import { forwardLead, toCrmPayload } from "./lead.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;
@@ -26,15 +26,14 @@ export default async function handler(req, res) {
 
   if (valid) {
     // Server-stamped verification: this is the field your buyers / CRM should trust.
-    await forwardLead({
-      leadId: leadId || null,
+    await forwardLead(toCrmPayload({
+      leadId: leadId || "",
       phone: to.slice(2),
       stage: "verified",
       phoneVerified: true,
       verifiedTs: new Date().toISOString(),
-      verifiedBy: "twilio_verify",
       ip: ip(req),
-    }).catch(() => {});
+    })).catch(() => {});
   }
 
   return res.status(200).json({ ok: true, valid });

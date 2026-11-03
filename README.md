@@ -16,6 +16,16 @@ Static funnel (`public/index.html`) + three Vercel serverless routes:
 4. **Test** — open the deployment URL, complete the funnel with your own mobile. The SMS arrives within ~10 s. Check *Twilio → Monitor → Logs → Verify* and *Vercel → Logs*.
 5. **Domain** — *Settings → Domains* → add yours.
 
+## GoHighLevel setup
+
+1. GHL → Automation → Workflows → create a workflow with trigger **Inbound Webhook** → copy its URL.
+2. Vercel → Environment Variables → `CRM_WEBHOOK_URL` = that URL → Redeploy.
+3. Submit one test lead through the funnel; GHL shows the sample payload under the trigger ("Mapping reference").
+4. Add a **Create/Update Contact** action: `first_name`, `last_name`, `email`, `phone`, `company_name`, `postal_code` map to the standard fields; the funnel answers (`time_in_business`, `funding_amount`, `monthly_revenue`, `credit_score`, `industry`, `open_positions`, `urgency`, `prior_default`, `funding_needs`, `lead_tier`, `lead_score`, `qualified`, `phone_verified`, `stage`) go to custom fields you create once in Settings → Custom Fields. `tags` is a comma-separated list (`financiaro-hot`, `stage-verified`, `phone-verified`).
+5. Add branches on `qualified` / `lead_tier` / `phone_verified` for routing and call tasks.
+
+To receive only phone-captured, qualified leads set `CRM_FORWARD_STAGES=complete,verified,updated`.
+
 ## Lead events your CRM receives
 
 Every POST is JSON with a `stage`:
