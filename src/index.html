@@ -145,7 +145,7 @@ blockquote cite{display:block;margin-top:6px;font-style:normal;font-size:12.5px;
 .callText{font-size:15px;line-height:1.55;opacity:.92}
 .callNumber{display:grid;gap:2px;text-align:center;padding:14px;border-radius:12px;background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.3)}
 .callNumber span{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
-.callNumber b{font-family:var(--mono);font-size:28px;font-variant-numeric:tabular-nums;color:#8fe3cf}
+.callNumber b{font-family:var(--display);font-size:24px;color:#8fe3cf}
 .callNumber small{font-size:12.5px;opacity:.8}
 .ready{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px}
 .ready li{display:flex;gap:10px;align-items:flex-start}
@@ -430,17 +430,17 @@ pre{overflow-x:auto;font-family:var(--mono);font-size:12px;background:var(--acce
   <section class="screen" id="results" hidden>
     <div class="callCard">
       <div class="callTop">
-        <div class="avatar">JM</div>
+        <div class="avatar" aria-hidden="true">✓</div>
         <div>
           <p class="eyebrow">You're pre-qualified</p>
-          <h2>Jordan is reviewing your file right now</h2>
+          <h2>A funding advisor is reviewing your file</h2>
         </div>
       </div>
-      <p class="callText">Your dedicated funding advisor will call you <b>today</b> to confirm your best option and lock in your rate. Approvals move fast, and <b>the first call is where your rate gets reserved</b>.</p>
+      <p class="callText">One of our funding advisors will call you shortly to confirm your best option and lock in your rate. Approvals move fast, and <b>the first call is where your rate gets reserved</b>.</p>
       <div class="callNumber">
-        <span>Expect a call from</span>
-        <b id="callFrom">(305) 555-0199</b>
-        <small>Save it so you don't miss us. It's a real person, not a robot.</small>
+        <span>What happens next</span>
+        <b>Expect a call today</b>
+        <small>From a real person, not a robot. If you miss it, we'll text you to reschedule.</small>
       </div>
       <ul class="ready">
         <li>Keep your phone nearby for the next few hours</li>
@@ -449,11 +449,11 @@ pre{overflow-x:auto;font-family:var(--mono);font-size:12px;background:var(--acce
       </ul>
     </div>
     <div class="more" id="more">
-      <h3>While Jordan reviews your file…</h3>
+      <h3>While your advisor reviews your file…</h3>
       <p class="why">One quick detail helps us match you with the right lender. Optional.</p>
       <textarea id="notes" rows="3" maxlength="600" placeholder="What will the funds be used for? Example: a second truck and a driver."></textarea>
       <button class="btn" id="saveMore">Save</button>
-      <p class="bar" id="moreDone" hidden>Saved. Jordan has everything needed for your call.</p>
+      <p class="bar" id="moreDone" hidden>Saved. Your advisor has everything needed for your call.</p>
     </div>
     <p class="hint">Pre-qualification is based on the information you provided. Final terms depend on lender underwriting. Not a commitment to lend.</p>
   </section>
@@ -475,7 +475,6 @@ pre{overflow-x:auto;font-family:var(--mono);font-size:12px;background:var(--acce
 <script>
 /* ====== CONFIG ====== */
 const COMPANY = "Financiaro";
-const ADVISOR_PHONE = "(305) 555-0199";   // the outbound number your advisors call from — shown on the thank-you page
 
 const $ = s => document.querySelector(s);
 const fmt = n => "$" + Math.round(n).toLocaleString("en-US");
@@ -531,7 +530,7 @@ function routeOnLoad(){
   document.querySelectorAll("main .screen").forEach(s => s.hidden = true);
   $("#bar").style.width = "100%";
   if (p === "/typ-nq") { $("#unq").hidden = false; }
-  else { $("#callFrom").textContent = ADVISOR_PHONE; $("#results").hidden = false; }
+  else { $("#results").hidden = false; }
   return true;
 }
 window.addEventListener("popstate", () => { if (location.pathname === "/") location.reload(); });
@@ -701,10 +700,9 @@ function finishOtp(verified){
 }
 
 function renderOffers(){
-  $("#callFrom").textContent = ADVISOR_PHONE;
   if (!data.offers.length){
     document.querySelector(".callTop .eyebrow").textContent = "Almost there";
-    document.querySelector(".callTop h2").textContent = "Jordan is building your funding roadmap";
+    document.querySelector(".callTop h2").textContent = "A funding advisor is building your roadmap";
     document.querySelector(".callText").innerHTML = "Your advisor will call you <b>today</b> to walk through starter programs you can use now and the fastest path to a full loan.";
   }
   $("#results").hidden = false;
