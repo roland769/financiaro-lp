@@ -658,7 +658,7 @@ async function sendOtp(phone){
 }
 async function verifyOtp(code){
   try {
-    const r = await fetch("/api/otp-check", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ phone:data.phone, code, leadId:data.leadId }) });
+    const r = await fetch("/api/otp-check", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ phone:data.phone, code, lead:{...data, offers:(data.offers||[]).map(o=>({id:o.id,name:o.name,amount:o.amount,max:o.max,apr:o.apr}))} }) });
     return (await r.json()).valid === true;
   } catch(_) { return false; }
 }

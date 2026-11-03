@@ -1,15 +1,13 @@
 // POST /api/lead  { ...lead, stage }
-// Receives every lead event from the page (partial / complete / updated / unqualified),
-// assigns a leadId on first contact, stamps server-side metadata and forwards a FLAT,
-// human-readable payload to the CRM webhook (GoHighLevel / LeadConnector inbound webhook).
-// The client never sees the CRM URL, and "phoneVerified" is only ever set by otp-check.js.
+// Receives lead events from the page (partial / complete / updated / unqualified) for logging and
+// assigns a leadId. It does NOT forward anything: the CRM webhook is called only from otp-check.js,
+// after Twilio confirms the SMS code, and only for qualified profiles.
 import { cors, readJson, ip, rateLimit } from "./_lib.js";
 import { randomUUID, createHmac } from "node:crypto";
 
-const CRM_WEBHOOK_URL = () => process.env.CRM_WEBHOOK_URL || "";
-const CRM_SECRET = () => process.env.CRM_WEBHOOK_SECRET || "";
-// Which stages to forward. Default: everything. Example to only forward qualified, phone-captured leads: "complete,verified,updated"
-const FORWARD_STAGES = () => (process.env.CRM_FORWARD_STAGES || "partial,complete,verified,unverified,updated,unqualified").split(",").map(s => s.trim());
+// GoHighLevel inbound webhook. Fired ONLY for qualified leads whose phone passed SMS verification (see otp-check.js).
+const CRM_WEBHOOK_URL = () => "https://services.leadconnectorhq.com/hooks/029BO0GsMOyMQqdlzocp/webhook-trigger/a6f13dad-7564-42b4-ab10-65a7d4dbf08c";
+const CRM_SECRET = () => "";
 
 /* ---------- answer labels (numeric values -> what the visitor clicked) ---------- */
 const L = {
@@ -77,7 +75,6 @@ export function toCrmPayload(lead, extra = {}) {
 
 export async function forwardLead(payload) {
   const url = CRM_WEBHOOK_URL();
-  if (!url) { console.log("[lead] no CRM_WEBHOOK_URL set; payload:", JSON.stringify(payload)); return; }
   const body = JSON.stringify(payload);
   const headers = { "Content-Type": "application/json" };
   if (CRM_SECRET()) headers["X-Signature"] = createHmac("sha256", CRM_SECRET()).update(body).digest("hex");
@@ -92,16 +89,6 @@ export default async function handler(req, res) {
 
   const lead = readJson(req);
   const leadId = lead.leadId || randomUUID();
-
-  // Never trust these from the browser.
-  delete lead.phoneVerified; delete lead.verifiedTs; delete lead.verifiedBy;
-
-  lead.leadId = leadId;
-  lead.ip = ip(req);
-  lead.userAgent = req.headers["user-agent"] || "";
-
-  if (FORWARD_STAGES().includes(lead.stage)) {
-    try { await forwardLead(toCrmPayload(lead)); } catch (e) { console.error("lead forward failed", e.message); }
-  }
+  console.log("[lead]", lead.stage, leadId, lead.email || "", lead.lead?.tier || "");
   return res.status(200).json({ ok: true, leadId });
 }

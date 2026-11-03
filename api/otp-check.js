@@ -1,6 +1,7 @@
-// POST /api/otp-check  { phone, code, leadId? }
-// Checks the code with Twilio Verify. On success, marks the lead as phone-verified server-side
-// (so a visitor cannot forge "verified" from the browser) and forwards the update to the CRM.
+// POST /api/otp-check  { phone, code, lead }
+// Checks the code with Twilio Verify. On success AND only if the profile is qualified, forwards the
+// full lead (all funnel answers) to the CRM webhook with phoneVerified:true stamped server-side.
+// A visitor cannot trigger the webhook without a code approved by Twilio.
 import { client, VERIFY_SID, toE164, rateLimit, ip, cors, readJson } from "./_lib.js";
 import { forwardLead, toCrmPayload } from "./lead.js";
 
@@ -8,7 +9,7 @@ export default async function handler(req, res) {
   if (cors(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method" });
 
-  const { phone, code, leadId } = readJson(req);
+  const { phone, code, lead = {} } = readJson(req);
   const to = toE164(phone);
   if (!to || !/^\d{4,8}$/.test(String(code || ""))) return res.status(400).json({ ok: true, valid: false });
 
@@ -24,16 +25,18 @@ export default async function handler(req, res) {
     valid = false;
   }
 
-  if (valid) {
-    // Server-stamped verification: this is the field your buyers / CRM should trust.
-    await forwardLead(toCrmPayload({
-      leadId: leadId || "",
+  if (valid && lead.unqualified !== true) {
+    const payload = toCrmPayload({
+      ...lead,
       phone: to.slice(2),
       stage: "verified",
       phoneVerified: true,
       verifiedTs: new Date().toISOString(),
       ip: ip(req),
-    })).catch(() => {});
+      userAgent: req.headers["user-agent"] || "",
+    });
+    try { await forwardLead(payload); console.log("[crm] sent", payload.lead_id, payload.lead_tier); }
+    catch (e) { console.error("[crm] failed", e.message); }
   }
 
   return res.status(200).json({ ok: true, valid });

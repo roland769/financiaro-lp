@@ -16,28 +16,16 @@ Static funnel (`public/index.html`) + three Vercel serverless routes:
 4. **Test** — open the deployment URL, complete the funnel with your own mobile. The SMS arrives within ~10 s. Check *Twilio → Monitor → Logs → Verify* and *Vercel → Logs*.
 5. **Domain** — *Settings → Domains* → add yours.
 
-## GoHighLevel setup
+## GoHighLevel webhook
 
-1. GHL → Automation → Workflows → create a workflow with trigger **Inbound Webhook** → copy its URL.
-2. Vercel → Environment Variables → `CRM_WEBHOOK_URL` = that URL → Redeploy.
-3. Submit one test lead through the funnel; GHL shows the sample payload under the trigger ("Mapping reference").
-4. Add a **Create/Update Contact** action: `first_name`, `last_name`, `email`, `phone`, `company_name`, `postal_code` map to the standard fields; the funnel answers (`time_in_business`, `funding_amount`, `monthly_revenue`, `credit_score`, `industry`, `open_positions`, `urgency`, `prior_default`, `funding_needs`, `lead_tier`, `lead_score`, `qualified`, `phone_verified`, `stage`) go to custom fields you create once in Settings → Custom Fields. `tags` is a comma-separated list (`financiaro-hot`, `stage-verified`, `phone-verified`).
-5. Add branches on `qualified` / `lead_tier` / `phone_verified` for routing and call tasks.
+The webhook URL is hard-coded in `api/lead.js` (`CRM_WEBHOOK_URL`). It fires **once per lead, only when**:
 
-To receive only phone-captured, qualified leads set `CRM_FORWARD_STAGES=complete,verified,updated`.
+1. the profile is qualified (not under 12 months / under $10K ask / under $30K revenue / 4+ positions / recent default), and
+2. the visitor entered the SMS code and Twilio approved it.
 
-## Lead events your CRM receives
+Partial leads, unverified phones and unqualified profiles never reach GHL (they only appear in Vercel logs). The payload is flat and human readable: `first_name`, `last_name`, `email`, `phone`, `company_name`, `postal_code`, `tags`, then every answer (`time_in_business`, `funding_amount`, `monthly_revenue`, `credit_score`, `industry`, `open_positions`, `urgency`, `prior_default`, `funding_needs`), scoring (`lead_tier`, `lead_score`, `eligible_products`, `best_product`, `max_amount`) and compliance (`phone_verified`, `verified_at`, `tcpa_consent_at`, `tcpa_consent_text`, `ip_address`).
 
-Every POST is JSON with a `stage`:
-
-- `partial` — after business name + email (all answers, score, eligible products)
-- `complete` — after first/last name + phone (adds TCPA consent text + timestamp)
-- `verified` — from the server only, after a successful SMS code (`phoneVerified:true`, `verifiedTs`)
-- `unverified` — visitor skipped the code
-- `updated` — optional notes added on the thank-you page
-- `unqualified` — hard-stop profiles (under 12 months, under $10K ask, under $30K/mo, 4+ positions, default in last 2 years); no phone asked
-
-Match events with `leadId`. Only trust `phoneVerified` when `stage` is `verified`.
+In GHL: Automation → Workflow → trigger **Inbound Webhook** → send one test lead → map the fields to the contact and your custom fields.
 
 ## Cost
 
