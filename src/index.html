@@ -523,6 +523,19 @@ function leadScore(d, offers){
   return { score:s, tier: s>=75?"HOT" : s>=50?"WARM" : "COLD" };
 }
 
+/* ====== URL ROUTES: /typ (qualified) and /typ-nq (unqualified) for analytics/pixels ====== */
+function goTo(path){ try { if (location.pathname !== path) history.pushState({path}, "", path); } catch(_){} }
+function routeOnLoad(){
+  const p = location.pathname.replace(/\/$/, "");
+  if (p !== "/typ" && p !== "/typ-nq") return false;
+  document.querySelectorAll("main .screen").forEach(s => s.hidden = true);
+  $("#bar").style.width = "100%";
+  if (p === "/typ-nq") { $("#unq").hidden = false; }
+  else { $("#callFrom").textContent = ADVISOR_PHONE; $("#results").hidden = false; }
+  return true;
+}
+window.addEventListener("popstate", () => { if (location.pathname === "/") location.reload(); });
+
 /* ====== NAV ====== */
 let data = {};
 const steps = [...document.querySelectorAll("main .screen[data-q]")];
@@ -536,7 +549,7 @@ function show(n){
   setBar(n);
   window.scrollTo({top:0,behavior:"smooth"});
 }
-show(0);
+if (!routeOnLoad()) show(0);
 const advance = () => cur < steps.length-1 ? show(cur+1) : askEmail();
 function askEmail(){ steps.forEach(s=>s.hidden=true); setBar(steps.length); $("#emailStep").hidden=false; window.scrollTo({top:0,behavior:"smooth"}); setTimeout(()=>$("#biz").focus(),300); }
 $("#nZip").onclick = () => { const ok=/^\d{5}$/.test($("#zip").value.trim()); $("#eZip").hidden=ok; ok ? advance() : $("#zip").focus(); };
@@ -584,6 +597,7 @@ function finish(biz, email){
     data.lead.tier = "UNQUALIFIED";
     submitLead(data, "unqualified");
     $("#bar").style.width = "100%";
+    goTo("/typ-nq");
     $("#unq").hidden = false; window.scrollTo({top:0,behavior:"smooth"});
     track("unqualified_shown", data.lead);
     return;
@@ -679,6 +693,7 @@ $("#otpEdit").onclick = e => { e.preventDefault(); $("#otp").hidden = true; $("#
 $("#otpSkip").onclick = e => { e.preventDefault(); finishOtp(false); };
 function finishOtp(verified){
   $("#bar").style.width = "100%";
+  goTo("/typ");
   data.phoneVerified = verified; data.verifiedTs = verified ? new Date().toISOString() : null;
   $("#otp").hidden = true;
   renderOffers();

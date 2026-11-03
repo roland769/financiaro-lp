@@ -46,3 +46,10 @@ Edit `src/index.html` (readable source), then minify into `public/index.html`:
 ```
 npx html-minifier-terser src/index.html -o public/index.html --collapse-whitespace --remove-comments --minify-css true --minify-js true
 ```
+
+## Thank-you URLs (for pixels / analytics)
+
+- `/typ` — qualified lead, shown after the SMS code (or skip)
+- `/typ-nq` — unqualified profile, shown right after business name + email
+
+Both are rewrites to the same page (`vercel.json`); the page switches to the right screen from the URL. Fire your Meta / Google conversion on a page view of `/typ`.
