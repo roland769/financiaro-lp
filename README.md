@@ -38,3 +38,11 @@ Twilio Verify ≈ $0.05 per successful verification + ~$0.008 per SMS. Vercel Ho
 - Copy, questions, thresholds: `public/index.html` (search `PRODUCTS`, `leadScore`, `isUnqualified`)
 - Advisor name / callback number: `ADVISOR_PHONE` and the "Jordan" card in `public/index.html`
 - Rate limits: `api/_lib.js`
+
+## Editing the page
+
+Edit `src/index.html` (readable source), then minify into `public/index.html`:
+
+```
+npx html-minifier-terser src/index.html -o public/index.html --collapse-whitespace --remove-comments --minify-css true --minify-js true
+```
