@@ -809,13 +809,7 @@ async function submitLead(lead, stage){
 }
 function track(ev, p){
   try{ window.dataLayer = window.dataLayer||[]; window.dataLayer.push({event:ev, ...p}); }catch(_){}
-  try{ if (!window.fbq) return;
-    const tier = p && p.tier || "";
-    if (ev === "lead_partial")      fbq("track", "InitiateCheckout", { content_name:"funnel_email", lead_tier:tier });
-    if (ev === "lead_complete")     fbq("track", "Contact", { content_name:"funnel_phone", lead_tier:tier });
-    if (ev === "lead_verified")     fbq("track", "Lead", { content_name:"qualified_verified", lead_tier:tier, value:1, currency:"USD" });
-    if (ev === "unqualified_shown") fbq("trackCustom", "Unqualified", { lead_tier:tier });
-  }catch(_){}
+  try{ if (window.fbq && ev === "lead_verified") fbq("track", "Lead", { content_name:"qualified_verified", lead_tier:(p&&p.tier)||"", value:1, currency:"USD" }); }catch(_){}
 }
 document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener("click",e=>e.preventDefault()));
 </script>
